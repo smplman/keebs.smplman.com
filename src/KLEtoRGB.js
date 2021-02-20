@@ -1,4 +1,4 @@
-import testData from './tests/keyboard-layout.json';
+// import testData from './tests/keyboard-layout.json';
 
 const X_COORD_OFFSET = 0.0
 const Y_COORD_OFFSET = 0.0
