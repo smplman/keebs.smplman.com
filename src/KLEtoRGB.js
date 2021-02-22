@@ -11,6 +11,7 @@ export function KLEtoRGB (data, options) {
   // for each row
   let currentY = -0.5;
   let keyNum = 0;
+  let banks = ['A']; // TODO support multiple banks
 
   data.forEach((row, y) => {  
     // for each key
@@ -36,9 +37,10 @@ export function KLEtoRGB (data, options) {
       } else if (typeof key === 'string') {
         const newKey = {
           num: keyNum,
+          key,
           xUnit: currentX + keyWidth / 2,
           yUnit: currentY + keyHeight / 2,
-          legend: key,
+          legend: banks[0] + (keyNum + keyWidth), // A0, A1, etc...
           width: keyWidth,
           height: keyHeight
         }
@@ -58,6 +60,8 @@ export function KLEtoRGB (data, options) {
     currentY += 1.0;
     currentX = 0;
   });
+
+  console.log(keys);
 
   keys.forEach((key) => {
     key.xCoord = parseFloat(key.xUnit * 19.05 + X_COORD_OFFSET).toFixed(8);

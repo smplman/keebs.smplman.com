@@ -6,16 +6,17 @@
     <FileLoader v-on:file-loaded="fileLoaded"/>
     <form>
       <label>Num Per Line</label>
-      <input v-model="options.numPerLine" type="text" name="numPerLine">
+      <input v-model="options.numPerLine" @change="inputChanged" type="text" name="numPerLine">
       <label>Index Start</label>
-      <select v-model="options.indexStart" name="indexStart" id="indexStart">
+      <select v-model="options.indexStart" @change="inputChanged" name="indexStart" id="indexStart">
         <option value="0">0</option>
         <option value="1">1</option>
       </select>
       <label>Index End</label>
-      <input v-model="options.indexEnd" type="text" name="indexEnd">
+      <input v-model="options.indexEnd" @change="inputChanged" type="text" name="indexEnd">
     </form>
-    <textarea v-model="input" @paste="inputChanged"></textarea>
+    <button @click="inputChanged">Convert</button>
+    <textarea v-model="input" @change="inputChanged" @paste="inputPasted"></textarea>
     <h2>Output</h2>
     <textarea v-model="output"></textarea>
   </div>
@@ -44,16 +45,27 @@ export default {
   methods: {
     fileLoaded (data) {
       console.log('App loaded file');
-      const jsonData = JSON.parse(data);
-      console.log(jsonData);
-      this.input = data;
-      this.output = KLEtoRGB(jsonData, this.options);
+      this.parseData(data);
     },
-    inputChanged (e) {
+    inputChanged () {
       console.log('Input changed', this.input);
-      const jsonData = JSON.parse(e.clipboardData.getData('text/plain'));
-      console.log(jsonData);
-      this.output = KLEtoRGB(jsonData, this.options);
+      this.parseData(this.input);
+    },
+    inputPasted (e) {
+      const data = e.clipboardData.getData('text/plain');
+      console.log('Input pasted', data);
+      this.parseData(data);
+    },
+    parseData (data) {
+      try {
+        const jsonData = JSON.parse(data);
+        this.input = data;
+        this.output = KLEtoRGB(jsonData, this.options);
+      } catch (error) {
+        console.error(error);
+        this.output = error;
+      }
+
     }
   },
   mounted () {
@@ -88,6 +100,12 @@ input, select {
 }
 
 form {
+  margin-top: 20px;
+}
+
+button {
+  display: block;
+  margin: auto;
   margin-top: 20px;
 }
 </style>
