@@ -12,13 +12,24 @@ export function KLEtoRGB (data, options) {
   let currentY = -0.5;
   let keyNum = 0;
   let banks = ['A']; // TODO support multiple banks
+  let legendNum = 0;
 
-  data.forEach((row, y) => {  
+  // loop row
+  data.forEach((row, y) => { 
+  
+    // Sometimes KLE puts the keyboard meta data as the first item, it's usually an object
+    if (!Array.isArray(row)) {
+      // Skip meta data
+      return;
+    }
+
     // for each key
     let currentX = -0.5;
     let keyWidth = 1;
     let keyHeight = 1;
+    let rowRemainder = 0;
 
+    // loop keys in row
     row.forEach((key, x) => {
       // This configures the size of the key in the next key
       if (typeof key === 'object') {
@@ -35,12 +46,26 @@ export function KLEtoRGB (data, options) {
           keyHeight = key.h
         }
       } else if (typeof key === 'string') {
+        let legend;
+        // Key widths > 3 will center the LED in the gap
+        if (keyWidth > 3) {
+          legend = banks[0] + (parseInt(keyWidth / 2) + legendNum);
+        } else {
+          // checking for remainder to skip a col
+          if (keyWidth >= 1 && rowRemainder == 1) {
+            // check the remainder
+            legend = banks[0] + (legendNum + rowRemainder);
+            rowRemainder = 0;
+          } else {
+            legend = banks[0] + legendNum;
+          }
+        }
         const newKey = {
           num: keyNum,
           key,
           xUnit: currentX + keyWidth / 2,
           yUnit: currentY + keyHeight / 2,
-          legend: banks[0] + (keyNum + keyWidth), // A0, A1, etc...
+          legend,
           width: keyWidth,
           height: keyHeight
         }
@@ -49,6 +74,22 @@ export function KLEtoRGB (data, options) {
 
         currentX += keyWidth;
         keyNum += 1;
+        // adding the keywidth to affect the next key in the row
+        // split keywidths greater than 3
+        if (keyWidth > 3) {
+          legendNum = legendNum + parseInt(keyWidth);
+        } else {
+          legendNum = legendNum + parseInt(keyWidth);
+        }
+
+        // This assumes a key width < 1.5 doesn't skip a col
+        // a key width >= 1.5 does skip a col
+        rowRemainder = rowRemainder + (keyWidth % 1);
+        if (keyWidth >= 1.5 && rowRemainder > 0.5) {
+          legendNum++;
+          rowRemainder-= 0.5;
+        }
+        
         // reset key size for next key
         keyWidth = 1;
         keyHeight = 1;
@@ -150,7 +191,7 @@ function buildCoordString (keys, options, coords) {
   // build output
   let outputString = '';
   // counter because row sucks and wont let us start at our index start
-  let count = options.indexStart;
+  let count = parseInt(options.indexStart);
   // row counter
   let rowCounter = 0;
   // prev index letter
@@ -158,10 +199,11 @@ function buildCoordString (keys, options, coords) {
 
   keys.forEach((key) => {
     const IDLetter = key.legend.charAt(0);
-    const IDNumber = key.legend.substring(1);
+    const IDNumber = parseInt(key.legend.substring(1));
 
     // console.log(ID, IDLetter, IDNumber, prevIDLetter);
 
+    // TODO, support multiple banks
     // check if we moved to another bank e.g. A->B
     if (IDLetter != prevIDLetter) {
       console.log('moved to another bank')
@@ -169,8 +211,9 @@ function buildCoordString (keys, options, coords) {
       // then fill them in as blank
       // e.g. index_end = 64, current ID = A60, next ID = B02
       // fill in A61 - A64
-      if (count != options.indexEnd + 1) {
-        while (count <= options.indexEnd) {
+      const indexEnd = parseInt(options.indexEnd);
+      if (count != indexEnd + 1) {
+        while (count <= indexEnd) {
           listUnused.push(IDLetter + count);
             outputString += '{255,255}, ';
             rowCounter += 1;
@@ -197,7 +240,7 @@ function buildCoordString (keys, options, coords) {
           outputString += '\n';
           rowCounter = 0;
         }
-        count += 1
+        count += 1;
       }
     }
 

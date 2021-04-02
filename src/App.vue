@@ -36,7 +36,7 @@ export default {
       options: {
         indexEnd: 101,
         indexStart: 0,
-        numPerLine: 17
+        numPerLine: 16
       },
       input: '',
       output: ''
@@ -48,7 +48,7 @@ export default {
       this.parseData(data);
     },
     inputChanged () {
-      console.log('Input changed', this.input);
+      console.log('Input changed');
       this.parseData(this.input);
     },
     inputPasted (e) {
